@@ -1,50 +1,50 @@
-# Help Cog
-# STATUS:
-# add a feature to look deep into an indivual's command help
-
-
+# Surviv Help Cog
+# Cog that displays the commands you can run
 import discord
 from discord.ext import commands
-import json
 
+import traceback
 
-class Help(commands.Cog):
+# temp hack
+import sys
+import os
+sys.path.insert(0, os.path.abspath('..'))
+
+from loggers import AssessLogger, StreamLogger, WarningLogger
+class SurvivHelp(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-
+        self.color = self.bot.color 
+        self.name = "Surviv Help"
+    
     @commands.Cog.listener()
     async def on_ready(self):
-        print("Help Cog Loaded")
-
-    @commands.command(aliases=["info", "support"])
+        AssessLogger.log(f'Successfully loaded {self.name} Cog.')
+    
+    @commands.command(name="help")
     async def help(self, ctx):
-        prefix = await self.bot.command_prefix(self.bot, ctx.message)
-        is_form = prefix + "issue "
-        sug_form = prefix + "suggest "
-        gun_form = prefix + "gun "
-        play_form = prefix + "player "
-        help_form = prefix + "help"
-        ping_form = prefix + "ping"
-        up_form = prefix + "update"
-        mel_form = prefix + "melee "
-        change_form = prefix + "change_pref "
-        config_form = prefix + "config "
-        twitch_form = prefix + "twitch"
-        link_gen_form = prefix + "link_gen"
-        vote_form = prefix + "vote"
-        with open("cogs/votes.json", "r") as f:
-            json_votes = json.load(f)
-        vote_count = json_votes["votes"]
-        embed = discord.Embed(
-            title=f" Current Servers: `{len(self.bot.guilds)}`\n\U0001f44d Using the Surviv Stats Bot \U0001f44d",
-            description=f"\U0001F52B `{gun_form}(gun_name)`: **Gets the Stats of a Gun** *notice the space \n ℹ️`{play_form}(player)`: **Getting Stats of Player** *notice the space \n \U0001F3D3 `{ping_form}`: **Check the Latency of Surviv Stat Bot** \n ⏫ `{up_form}`: **Get the current update in surviv.io** \n 🔪 `{mel_form}(melee)`: **Get the Stats of the Melee Weapon** \n 📖 `{is_form}(text)`: **Log in issue in surviv stat bot that we will try to fix** \n 📝 `{sug_form}(text)`: **Suggest a feature for the bot** \n 👀 `{twitch_form}`: **Gets Current Twitch Streamers** \n 🗳️ `{vote_form}`: **Cast your vote that you like the bot.** Vote Count: `{vote_count}` \n 🤔 `{change_form}(prefix)`: **Changes Prefix from `{prefix}` to something else.** \n  NOTE: Only server members with roles: **Owner, Moderator, Manager, or Admin** are allowed to use the **Change Prefix** Command.",
-            color=0x00B037,
-        )
-        await ctx.send(embed=embed)
-
+        try:
+            disc = f"\n**NOTE**: You can find the arguments a command supports by typing the command with `args` at the end.\n**Example**: `{ctx.prefix}player`\n"
+            intro = "Surviv Stat Bot Commands!\nThe Game is playable at https://surviv.io/."
+            info_command_desc  = f"ℹ️ `{ctx.prefix}info` - Returns some information on the game surviv.io.\n"
+            melee_command_desc = f"🔪 `{ctx.prefix}melee` - Returns stats for a melee weapon in surviv.io.\n"
+            link_command_desc = f"🔗 `{ctx.prefix}link` - Returns a party link for surviv.io that expires in 7 seconds.\n"
+            gun_command_desc = f"\U0001F52B `{ctx.prefix}gun` - Returns stats for a gun in surviv.io.\n"
+            player_command_desc = f"⛹ `{ctx.prefix}player` - Returns stats for a player in surviv.io.\n"
+            twitch_command_desc = f"🕹️ `{ctx.prefix}twitch` - Returns the top streamers currently streaming surviv.io.\n"
+            update_command_desc = f"🆕 `{ctx.prefix}update` - Returns the current update in surviv.io.\n" 
+            website_command_desc = f"🔗`{ctx.prefix}website` - Link to the website.\n" 
+            supportserver_command_desc = f"🔗`{ctx.prefix}support` - Link to the support server.\n" 
+        
+            embed = discord.Embed(title="<:surviv:743213975889641575>  Surviv.io Commands  <:surviv:743213975889641575>",
+                                                           description = f"{disc}\n{intro}\n\n{info_command_desc}{melee_command_desc}{link_command_desc}{gun_command_desc}{player_command_desc}{twitch_command_desc}{website_command_desc}{update_command_desc}{supportserver_command_desc}",                               
+        color=self.color)          
+            embed.set_footer(text=f"{self.name} Dashboard requested by {ctx.message.author}", icon_url=ctx.author.avatar_url)
+            await ctx.send(embed=embed)
+            StreamLogger.log(f'{ctx.message.author} ran {self.name} Command successfully.')
+        except Exception as e:
+            WarningLogger.log(f'{ctx.message.author} ran {self.name} Command unsuccessfully. Raised {traceback.format_exc()}')
 
 def setup(bot):
-    # Removing existing help command
-    # in place of new one
     bot.remove_command("help")
-    bot.add_cog(Help(bot))
+    bot.add_cog(SurvivHelp(bot))
